@@ -3,45 +3,34 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRequest;
 use App\Models\User;
+use Faker\Provider\UserAgent;
 use Illuminate\Http\Request;
 
 class ApiController extends Controller
 {
 
- /**
+    /**
      * Register a new user.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function register(Request $request){
-       
-        // Validate the incoming data
-        $request->validate([
-            'name' =>'required|string',
-            'email' =>'required|email|unique:users',
-            'password' => 'required|confirmed',
-            'role_id' =>'required|integer',
-        ]);
-
+    public function register(UserRequest $request)
+    {
         // Create a new user record in the database
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'role_id' => $request->role_id,
-        ]);
-if($user->save()){
-    return response()->json([
-        'user' => $user,
-        'message' => 'User created successfully'
-    ], 201);
-}else{
-    return response()->json([
-       'message' => 'Something went wrong'
-    ], 500);
-}
+        $user = User::create($request->validated());
+        if ($user->save()) {
+            return response()->json([
+                'user' => $user,
+                'message' => 'User created successfully'
+            ], 201);
+        } else {
+            return response()->json([
+                'message' => 'Something went wrong'
+            ], 500);
+        }
         // Return a JSON response indicating successful user creation
 
     }
@@ -52,17 +41,18 @@ if($user->save()){
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login(Request $request){
-        
+    public function login(Request $request)
+    {
+
         $credentials = request(['email', 'password']);
 
-        
-        if (! $token = auth()->attempt($credentials)) {
-           
+
+        if (!$token = auth()->attempt($credentials)) {
+
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-       
+
         return $this->respondWithToken($token);
     }
 
@@ -71,11 +61,12 @@ if($user->save()){
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function logout(){
-       
+    public function logout()
+    {
+
         auth()->logout();
 
-        
+
         return response()->json(['message' => 'Successfully logged out']);
     }
 
@@ -84,9 +75,25 @@ if($user->save()){
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function profile(){
-       
+    public function profile()
+    {
+
         return response()->json(auth()->user());
+    }
+
+       /**
+     * Return the profile of the currently authenticated user.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateProfile(UserRequest $request, User $user)
+    {
+
+        $user->update($request->validated());
+        return response()->json([
+            'user' => $user,
+            'message' => 'Profile updated successfully'
+        ], 200);
     }
 
     /**
@@ -94,8 +101,9 @@ if($user->save()){
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function refreshToken(){
-       
+    public function refreshToken()
+    {
+
         return $this->respondWithToken(auth()->refresh());
     }
 
@@ -114,5 +122,4 @@ if($user->save()){
             'expires_in' => auth()->factory()->getTTL() * 60
         ]);
     }
-
 }

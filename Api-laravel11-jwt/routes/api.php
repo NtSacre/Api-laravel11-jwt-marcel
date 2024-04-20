@@ -19,13 +19,14 @@ Route::post('login', [ApiController::class, 'login']);
 Route::group(['middleware' => 'auth:api'], function () {
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('profile', [ApiController::class, 'profile']);
+    Route::put('update-profile/{user}', [ApiController::class, 'updateProfile']);
     Route::get('refreshToken', [ApiController::class, 'refreshToken']);
 });
 
 Route::apiResource('role', RoleController::class)->middleware('superAdmin');
 
-
-Route::get('loginin', function (){
+//if user is not logged in
+Route::get('login-auth', function (){
 return response()->json([
     'error' => 'Unauthenticated',
 ], 404);
